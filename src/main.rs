@@ -18,6 +18,9 @@ fn main() {
 }
 
 #[derive(Component)]
+struct MainCamera;
+
+#[derive(Component)]
 struct Player;
 
 #[derive(Resource)]
@@ -39,7 +42,7 @@ struct Bullet {
 fn setup(mut commands: Commands) {
     // setup camera
     let camera_bundle = Camera2dBundle::default();
-    commands.spawn(camera_bundle);
+    commands.spawn(camera_bundle).insert(MainCamera);
     
     // mouse pos resource
     commands.insert_resource(MousePosition(Vec2::ZERO));
@@ -65,43 +68,39 @@ fn setup(mut commands: Commands) {
 fn gun_controls(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    mut query: Query<(&mut GunController, &Transform), With<Player>>,
+    camera_query: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+    mut query: Query<(&GunController, &Transform), With<Player>>,
     mouse_button_input: Res<Input<MouseButton>>,
     time: Res<Time>,
 ) {
     let window = window_query.get_single().expect("Primary window not found");
-    
-    for (mut gun_controller, player_transform) in query.iter_mut() {
-        gun_controller.shoot_timer -= time.delta_seconds(); // Decrement the timer
-        // 
+    let (camera, camera_transform) = camera_query.get_single().expect("Main camera not found");
+
+    if let Ok((gun_controller, player_transform)) = query.get_single_mut() {
         if let Some(cursor_position) = window.cursor_position() {
-            // convert cursor position from screen space to world space
-            let window_size = Vec2::new(window.width(), window.height());
-            let mut cursor_world_position = cursor_position - window_size / 2.0;
-            cursor_world_position.y *= -1.0; // invert y-axis to match world space
+            // Convert cursor position from screen space to world space
+            if let Some(world_position) = camera.viewport_to_world(camera_transform, cursor_position).map(|ray| ray.origin.truncate()) {
+                let diff = world_position - Vec2::new(player_transform.translation.x, player_transform.translation.y);
+                let angle = diff.y.atan2(diff.x);
 
-            let diff = cursor_world_position - Vec2::new(player_transform.translation.x, player_transform.translation.y);
-            let angle = diff.y.atan2(diff.x);
+                if mouse_button_input.just_pressed(MouseButton::Left) {
+                    let mut spawn_transform = Transform::from_translation(player_transform.translation);
+                    spawn_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
 
-            if mouse_button_input.just_pressed(MouseButton::Left) && gun_controller.shoot_timer <= 0.0 {
-                gun_controller.shoot_timer = gun_controller.shoot_cooldown; // reset the firing cooldown timer
-                
-                let mut spawn_transform = Transform::from_translation(player_transform.translation);
-                spawn_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
-
-                commands.spawn(SpriteBundle {
-                    transform: spawn_transform,
-                    sprite: Sprite {
-                        color: Color::rgb(0.8, 0.8, 0.0),
-                        custom_size: Some(Vec2::new(20.0, 2.0)),
+                    commands.spawn(SpriteBundle {
+                        transform: spawn_transform,
+                        sprite: Sprite {
+                            color: Color::rgb(0.8, 0.8, 0.0),
+                            custom_size: Some(Vec2::new(20.0, 3.0)),
+                            ..default()
+                        },
                         ..default()
-                    },
-                    ..default()
-                }).insert(Bullet {
-                    lifetime: BULLET_LIFETIME,
-                    speed: BULLET_SPEED,
-                    direction: diff.normalize(),
-                });
+                    }).insert(Bullet {
+                        lifetime: BULLET_LIFETIME,
+                        speed: BULLET_SPEED,
+                        direction: diff.normalize(),
+                    });
+                }
             }
         }
     }
