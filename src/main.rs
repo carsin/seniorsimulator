@@ -1,8 +1,9 @@
 use bevy::{prelude::*, window::PrimaryWindow};
 
-const BULLET_SPEED: f32 = 1000.0;
-const BULLET_LIFETIME: f32 = 10.0;
-
+const BULLET_SPEED: f32 = 1500.0;
+const BULLET_LIFETIME: f32 = 3.0;
+const GRID_SIZE: f32 = 1000.0; // Grid boundary
+const GRID_WIDTH: f32 = 2.0;  // Width of the grid lines
 
 fn main() {
     App::new()
@@ -10,6 +11,7 @@ fn main() {
         .add_systems(Startup, setup)
         .add_systems(Update, bevy::window::close_on_esc)
         .add_systems(Update, player_movement_sys)
+        .add_systems(Update, camera_follow_player_system)
         .add_systems(Update, bullet_movement_system)
         .add_systems(Update, gun_controls)
         .run();
@@ -34,7 +36,6 @@ struct Bullet {
     direction: Vec2,
 }
 
-
 fn setup(mut commands: Commands) {
     // setup camera
     let camera_bundle = Camera2dBundle::default();
@@ -42,6 +43,8 @@ fn setup(mut commands: Commands) {
     
     // mouse pos resource
     commands.insert_resource(MousePosition(Vec2::ZERO));
+
+    draw_grid(&mut commands);
 
     // spawn player box
     commands.spawn(SpriteBundle {
@@ -54,7 +57,7 @@ fn setup(mut commands: Commands) {
         })
         .insert(Player)
         .insert(GunController {
-            shoot_cooldown: 0.01,
+            shoot_cooldown: 0.2,
             shoot_timer: 0.0,
         });
 }
@@ -62,11 +65,15 @@ fn setup(mut commands: Commands) {
 fn gun_controls(
     mut commands: Commands,
     window_query: Query<&Window, With<PrimaryWindow>>,
-    mut query: Query<(&GunController, &Transform), With<Player>>,
+    mut query: Query<(&mut GunController, &Transform), With<Player>>,
     mouse_button_input: Res<Input<MouseButton>>,
+    time: Res<Time>,
 ) {
     let window = window_query.get_single().expect("Primary window not found");
-    if let Ok((gun_controller, player_transform)) = query.get_single_mut() {
+    
+    for (mut gun_controller, player_transform) in query.iter_mut() {
+        gun_controller.shoot_timer -= time.delta_seconds(); // Decrement the timer
+        // 
         if let Some(cursor_position) = window.cursor_position() {
             // convert cursor position from screen space to world space
             let window_size = Vec2::new(window.width(), window.height());
@@ -76,7 +83,9 @@ fn gun_controls(
             let diff = cursor_world_position - Vec2::new(player_transform.translation.x, player_transform.translation.y);
             let angle = diff.y.atan2(diff.x);
 
-            if mouse_button_input.just_pressed(MouseButton::Left) {
+            if mouse_button_input.just_pressed(MouseButton::Left) && gun_controller.shoot_timer <= 0.0 {
+                gun_controller.shoot_timer = gun_controller.shoot_cooldown; // reset the firing cooldown timer
+                
                 let mut spawn_transform = Transform::from_translation(player_transform.translation);
                 spawn_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
 
@@ -121,15 +130,6 @@ fn bullet_movement_system(
     }
 }
 
-fn mouse_position_system(
-    mut mouse_position: ResMut<MousePosition>,
-    mut cursor_moved_events: EventReader<CursorMoved>,
-) {
-    for event in cursor_moved_events.read() {
-        mouse_position.0 = event.position;
-    }
-}
-
 fn player_movement_sys(
     time: Res<Time>,
     keyboard_input: Res<Input<KeyCode>>,
@@ -154,4 +154,54 @@ fn player_movement_sys(
     }
 
     player_transform.translation += time.delta_seconds() * direction * speed;
+}
+
+// System to make the camera follow the player
+// fn camera_follow_player_system(
+//     player_query: Query<&Transform, With<Player>>,
+//     mut camera_query: Query<&mut Transform, (With<Camera2d>, With<CameraFollow>)>,
+// ) {
+//     let player_transform = player_query.single();
+//     let mut camera_transform = camera_query.single_mut();
+//     camera_transform.translation.x = player_transform.translation.x;
+//     camera_transform.translation.y = player_transform.translation.y;
+// }
+
+fn draw_grid(commands: &mut Commands) {
+    let map_size = (GRID_SIZE / GRID_WIDTH) as u32;
+
+    // Horizontal lines
+    for i in 0..=map_size {
+        let position = i as f32 * GRID_WIDTH - GRID_SIZE / 2.0;
+        commands.spawn(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(0.0, position, 0.0)),
+            sprite: Sprite {
+                color: Color::rgb(0.27, 0.27, 0.27),
+                custom_size: Some(Vec2::new(GRID_SIZE, GRID_WIDTH)),
+                ..default()
+            },
+            ..default()
+        });
+
+        // Vertical lines
+        commands.spawn(SpriteBundle {
+            transform: Transform::from_translation(Vec3::new(position, 0.0, 0.0)),
+            sprite: Sprite {
+                color: Color::rgb(0.27, 0.27, 0.27),
+                custom_size: Some(Vec2::new(GRID_WIDTH, GRID_SIZE)),
+                ..default()
+            },
+            ..default()
+        });
+    }
+}
+
+fn camera_follow_player_system(
+    player_query: Query<&Transform, With<Player>>,
+    mut camera_query: Query<&mut Transform, (With<Camera2d>, Without<Player>)>,
+) {
+    let player_transform = player_query.single();
+    let mut camera_transform = camera_query.single_mut();
+    camera_transform.translation.x = player_transform.translation.x;
+    camera_transform.translation.y = player_transform.translation.y;
 }
