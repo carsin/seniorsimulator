@@ -5,16 +5,13 @@ mod input;
 mod gun;
 mod player;
 mod constants;
+mod npc;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, bevy::window::close_on_esc)
-        .add_systems(Update, player::player_movement_sys)
-        .add_systems(Update, player::camera_follow_player_system)
-        .add_systems(Update, bullet_movement_system)
-        .add_systems(Update, gun::gun_controls)
+        .add_systems(Update, (bevy::window::close_on_esc, player::player_movement_sys, player::camera_follow_player_system, bullet_movement_system, gun::gun_controls, npc::npc_movement_system))
         .run();
 }
 
@@ -56,6 +53,21 @@ fn setup(mut commands: Commands) {
             acceleration: PLAYER_ACCEL,
         })
         .add_child(gun_entity);
+    
+    // Spawn an NPC
+    commands.spawn(SpriteBundle {
+        sprite: Sprite {
+            color: Color::rgb(0.5, 0.3, 0.7), // Different color to distinguish from the player
+            custom_size: Some(Vec2::new(30.0, 30.0)), // Customize as needed
+            ..Default::default()
+        },
+        transform: Transform::from_xyz(100.0, 100.0, 0.0), // Initial position
+        ..Default::default()
+    })
+    .insert(npc::Npc {
+        velocity: Vec3::new(0.0, 0.0, 0.0),
+        speed: NPC_SPEED,
+    });
 }
 
 

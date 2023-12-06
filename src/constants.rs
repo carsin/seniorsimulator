@@ -7,3 +7,5 @@ pub const GRID_SIZE: f32 = 2000.0; // Grid boundary
 pub const GRID_WIDTH: f32 = 2.0;  // Width of the grid lines
 pub const MAP_SIZE: u32 = 40;     // Number of grid lines
 pub const FRICTION: f32 = 0.92;
+pub const NPC_SPEED: f32 = 100.0;
+const NPC_INITIAL_HEALTH: i32 = 3; // Initial health of the NPC
