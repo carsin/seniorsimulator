@@ -1,17 +1,27 @@
 use bevy::prelude::*;
 use constants::*;
 
-mod input;
-mod gun;
-mod player;
 mod constants;
+mod gun;
+mod input;
 mod npc;
+mod player;
 
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
         .add_systems(Startup, setup)
-        .add_systems(Update, (bevy::window::close_on_esc, player::player_movement_sys, player::camera_follow_player_system, bullet_movement_system, gun::gun_controls, npc::npc_movement_system))
+        .add_systems(
+            Update,
+            (
+                bevy::window::close_on_esc,
+                player::player_movement_sys,
+                player::camera_follow_player_system,
+                bullet_movement_system,
+                gun::gun_controls,
+                npc::npc_movement_system,
+            ),
+        )
         .run();
 }
 
@@ -23,10 +33,11 @@ fn setup(mut commands: Commands) {
     draw_grid(&mut commands);
 
     // spawn gun as a child of the player
-    let gun_entity = commands.spawn(SpriteBundle {
+    let gun_entity = commands
+        .spawn(SpriteBundle {
             sprite: Sprite {
                 color: Color::rgb(0.5, 0.5, 0.5),
-                custom_size: Some(Vec2::new(15.0, 5.0)), 
+                custom_size: Some(Vec2::new(15.0, 5.0)),
                 ..Default::default()
             },
             transform: Transform::from_translation(Vec3::new(2., 0., 200.)),
@@ -38,7 +49,8 @@ fn setup(mut commands: Commands) {
         })
         .id();
     // spawn player box
-    commands.spawn(SpriteBundle {
+    commands
+        .spawn(SpriteBundle {
             sprite: Sprite {
                 color: Color::rgb(0.25, 0.75, 0.5),
                 custom_size: Some(Vec2::new(PLAYER_SIZE, PLAYER_SIZE)),
@@ -53,23 +65,24 @@ fn setup(mut commands: Commands) {
             acceleration: PLAYER_ACCEL,
         })
         .add_child(gun_entity);
-    
-    // Spawn an NPC
-    commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            color: Color::rgb(0.5, 0.3, 0.7), // Different color to distinguish from the player
-            custom_size: Some(Vec2::new(30.0, 30.0)), // Customize as needed
-            ..Default::default()
-        },
-        transform: Transform::from_xyz(100.0, 100.0, 0.0), // Initial position
-        ..Default::default()
-    })
-    .insert(npc::Npc {
-        velocity: Vec3::new(0.0, 0.0, 0.0),
-        speed: NPC_SPEED,
-    });
-}
 
+    // Spawn an NPC
+    commands
+        .spawn(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb(0.5, 0.3, 0.7),
+                custom_size: Some(Vec2::new(30.0, 30.0)),
+                ..Default::default()
+            },
+            transform: Transform::from_xyz(100., 100., 100.), // initial position
+            ..Default::default()
+        })
+        .insert(npc::Npc {
+            velocity: Vec3::new(0.0, 0.0, 0.0),
+            speed: NPC_SPEED,
+            health: NPC_INITIAL_HEALTH,
+        });
+}
 
 fn bullet_movement_system(
     mut commands: Commands,

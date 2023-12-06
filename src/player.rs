@@ -1,5 +1,5 @@
-use bevy::prelude::*;
 use super::constants::*;
+use bevy::prelude::*;
 
 #[derive(Component)]
 pub struct MainCamera;
@@ -18,7 +18,6 @@ pub fn player_movement_sys(
 ) {
     let mut direction = Vec3::ZERO;
     for (mut transform, mut player) in query.iter_mut() {
-
         if keyboard_input.pressed(KeyCode::A) {
             direction.x -= 1.0;
         }
@@ -32,9 +31,11 @@ pub fn player_movement_sys(
             direction.y -= 1.0;
         }
 
-         // Calculate new velocity
-        let new_velocity = (player.velocity + (direction * player.acceleration) * time.delta_seconds())
-            .clamp_length_max(player.max_velocity) * FRICTION;
+        // Calculate new velocity
+        let new_velocity = (player.velocity
+            + (direction * player.acceleration) * time.delta_seconds())
+        .clamp_length_max(player.max_velocity)
+            * FRICTION;
 
         // Update player's velocity
         player.velocity = new_velocity;
@@ -44,8 +45,14 @@ pub fn player_movement_sys(
 
         // Update position and clamp within grid
         transform.translation += player.velocity;
-        transform.translation.x = transform.translation.x.clamp(-GRID_SIZE / 2. + PLAYER_SIZE / 2., GRID_SIZE / 2. - PLAYER_SIZE / 2.);
-        transform.translation.y = transform.translation.y.clamp(-GRID_SIZE / 2. + PLAYER_SIZE / 2., GRID_SIZE / 2. - PLAYER_SIZE / 2.);
+        transform.translation.x = transform.translation.x.clamp(
+            -GRID_SIZE / 2. + PLAYER_SIZE / 2.,
+            GRID_SIZE / 2. - PLAYER_SIZE / 2.,
+        );
+        transform.translation.y = transform.translation.y.clamp(
+            -GRID_SIZE / 2. + PLAYER_SIZE / 2.,
+            GRID_SIZE / 2. - PLAYER_SIZE / 2.,
+        );
     }
 }
 
@@ -57,8 +64,14 @@ pub fn camera_follow_player_system(
     let mut camera_transform = camera_query.single_mut();
 
     // Calculate camera position, clamping to grid boundaries
-    let camera_x = player_transform.translation.x.clamp(-GRID_SIZE / 2., GRID_SIZE / 2.);
-    let camera_y = player_transform.translation.y.clamp(-GRID_SIZE / 2., GRID_SIZE / 2.);
+    let camera_x = player_transform
+        .translation
+        .x
+        .clamp(-GRID_SIZE / 2., GRID_SIZE / 2.);
+    let camera_y = player_transform
+        .translation
+        .y
+        .clamp(-GRID_SIZE / 2., GRID_SIZE / 2.);
 
     camera_transform.translation.x = camera_x;
     camera_transform.translation.y = camera_y;
