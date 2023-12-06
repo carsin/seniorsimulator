@@ -1,0 +1,9 @@
+pub const BULLET_SPEED: f32 = 1500.0;
+pub const BULLET_LIFETIME: f32 = 3.0;
+pub const PLAYER_SIZE: f32 = 30.0;
+pub const PLAYER_ACCEL: f32 = 30.0;
+pub const PLAYER_MAX_SPEED: f32 = 380.0;
+pub const GRID_SIZE: f32 = 2000.0; // Grid boundary
+pub const GRID_WIDTH: f32 = 2.0;  // Width of the grid lines
+pub const MAP_SIZE: u32 = 40;     // Number of grid lines
+pub const FRICTION: f32 = 0.92;
