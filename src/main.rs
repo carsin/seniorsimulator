@@ -25,6 +25,21 @@ fn setup(mut commands: Commands) {
 
     draw_grid(&mut commands);
 
+    // spawn gun as a child of the player
+    let gun_entity = commands.spawn(SpriteBundle {
+            sprite: Sprite {
+                color: Color::rgb(0.5, 0.5, 0.5),
+                custom_size: Some(Vec2::new(15.0, 5.0)), 
+                ..Default::default()
+            },
+            transform: Transform::from_translation(Vec3::new(2., 0., 200.)),
+            ..Default::default()
+        })
+        .insert(gun::Gun {
+            shoot_cooldown: 0.2,
+            shoot_timer: 0.0,
+        })
+        .id();
     // spawn player box
     commands.spawn(SpriteBundle {
             sprite: Sprite {
@@ -40,10 +55,7 @@ fn setup(mut commands: Commands) {
             max_velocity: PLAYER_MAX_SPEED,
             acceleration: PLAYER_ACCEL,
         })
-        .insert(gun::GunController {
-            shoot_cooldown: 0.2,
-            shoot_timer: 0.0,
-        });
+        .add_child(gun_entity);
 }
 
 
