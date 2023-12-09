@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 use constants::*;
 
 mod constants;
@@ -10,6 +11,7 @@ mod player;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugins(RapierPhysicsPlugin::<NoUserData>::default())
         .add_systems(Startup, setup)
         .add_systems(
             Update,
@@ -25,46 +27,19 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut rapier_config: ResMut<RapierConfiguration>) {
+    // remove rapier's default gravity
+    rapier_config.gravity = Vec2::ZERO;
+     
     // setup camera
     let camera_bundle = Camera2dBundle::default();
     commands.spawn(camera_bundle).insert(player::MainCamera);
 
+    // draw background
     draw_grid(&mut commands);
 
-    // spawn gun as a child of the player
-    let gun_entity = commands
-        .spawn(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb(0.5, 0.5, 0.5),
-                custom_size: Some(Vec2::new(15.0, 5.0)),
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(2., 0., 200.)),
-            ..Default::default()
-        })
-        .insert(gun::Gun {
-            shoot_cooldown: 0.2,
-            shoot_timer: 0.0,
-        })
-        .id();
-    // spawn player box
-    commands
-        .spawn(SpriteBundle {
-            sprite: Sprite {
-                color: Color::rgb(0.25, 0.75, 0.5),
-                custom_size: Some(Vec2::new(PLAYER_SIZE, PLAYER_SIZE)),
-                ..Default::default()
-            },
-            transform: Transform::from_translation(Vec3::new(2., 0., 100.)),
-            ..Default::default()
-        })
-        .insert(player::Player {
-            velocity: Vec3::ZERO,
-            max_velocity: PLAYER_MAX_SPEED,
-            acceleration: PLAYER_ACCEL,
-        })
-        .add_child(gun_entity);
+    // spawn player
+    player::spawn_player(&mut commands);
 
     // Spawn an NPC
     commands
