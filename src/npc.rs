@@ -27,8 +27,8 @@ pub fn spawn_npc(commands: &mut Commands) {
         .insert(LockedAxes::ROTATION_LOCKED)
         .insert(Ccd::enabled())
         .insert(TransformBundle::from(Transform::from_xyz(
-            rng.gen_range(-300.0..300.),
-            rng.gen_range(-300.0..300.),
+            rng.gen_range(-GRID_SIZE / 2. + NPC_SIZE..GRID_SIZE / 2. - NPC_SIZE),
+            rng.gen_range(-GRID_SIZE / 2. + NPC_SIZE..GRID_SIZE / 2. - NPC_SIZE),
             100.,
         )))
         .insert(Velocity {
@@ -45,7 +45,7 @@ pub fn spawn_npc(commands: &mut Commands) {
 pub fn npc_movement_system(mut query: Query<(&mut Velocity, &mut Npc, &Transform)>) {
     for (mut velocity, mut npc, transform) in query.iter_mut() {
         // Randomly decide whether to change direction
-        if rand::random::<f32>() < 0.02 {
+        if rand::random::<f32>() < 0.01 {
             npc.velocity = Vec2::new(rand::random::<f32>() - 0.5, rand::random::<f32>() - 0.5)
                 .normalize_or_zero()
                 * npc.speed;
@@ -74,6 +74,5 @@ pub fn npc_movement_system(mut query: Query<(&mut Velocity, &mut Npc, &Transform
         } else {
             velocity.linvel.y
         };
-        println!("vel: {}", velocity.linvel);
     }
 }

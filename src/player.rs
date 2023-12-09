@@ -30,7 +30,7 @@ pub fn spawn_player(commands: &mut Commands) {
             ..Default::default()
         })
         .insert(gun::Gun {
-            shoot_cooldown: 0.05,
+            shoot_cooldown: 0.15,
             shoot_timer: 0.0,
         })
         .id();
