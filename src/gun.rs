@@ -33,22 +33,36 @@ pub fn gun_controls(
 
     for (mut player_transform, children) in player_query.iter_mut() {
         if let Some(cursor_position) = window.cursor_position() {
-            if let Some(world_position) = camera.viewport_to_world(camera_transform, cursor_position).map(|ray| ray.origin.truncate()) {
-                let diff = world_position - Vec2::new(player_transform.translation.x, player_transform.translation.y);
+            if let Some(world_position) = camera
+                .viewport_to_world(camera_transform, cursor_position)
+                .map(|ray| ray.origin.truncate())
+            {
+                let diff = world_position
+                    - Vec2::new(
+                        player_transform.translation.x,
+                        player_transform.translation.y,
+                    );
                 let angle = diff.y.atan2(diff.x);
 
                 // rotate player towards cursor
                 player_transform.rotation = Quat::from_axis_angle(Vec3::Z, angle);
 
-                if let Some(gun_entity) = children.iter().find(|&&entity| gun_query.get_component::<Gun>(entity).is_ok()) {
+                if let Some(gun_entity) = children
+                    .iter()
+                    .find(|&&entity| gun_query.get_component::<Gun>(entity).is_ok())
+                {
                     if let Ok(mut gun) = gun_query.get_mut(*gun_entity) {
                         gun.shoot_timer -= time.delta_seconds();
 
-                        if (mouse_button_input.just_pressed(MouseButton::Left) || keyboard_input.pressed(KeyCode::Space)) && gun.shoot_timer <= 0.0 {
+                        if (mouse_button_input.just_pressed(MouseButton::Left)
+                            || keyboard_input.pressed(KeyCode::Space))
+                            && gun.shoot_timer <= 0.0
+                        {
                             gun.shoot_timer = gun.shoot_cooldown;
 
                             // calculate the bullet origin using the player's direction
-                            let bullet_offset = Vec3::new(angle.cos(), angle.sin(), 0.0) * (PLAYER_SIZE / 2.0 + GUN_OFFSET);
+                            let bullet_offset = Vec3::new(angle.cos(), angle.sin(), 0.0)
+                                * (PLAYER_SIZE / 2.0 + GUN_OFFSET);
                             let bullet_origin = player_transform.translation + bullet_offset;
 
                             // spawn bullet
@@ -84,7 +98,9 @@ fn spawn_bullet(commands: &mut Commands, bullet_origin: Vec3, rotation: Quat, di
             ..default()
         })
         .insert(RigidBody::Dynamic)
-        .insert(Collider::cuboid(BULLET_SIZE.x / 2., BULLET_SIZE.y  / 2.))
+        .insert(Ccd::enabled())
+        .insert(Collider::cuboid(BULLET_SIZE.x / 2., BULLET_SIZE.y / 2.))
+        .insert(ActiveEvents::COLLISION_EVENTS)
         .insert(Velocity {
             linvel: bullet_direction * BULLET_SPEED,
             angvel: 0.0,

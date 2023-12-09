@@ -9,7 +9,6 @@ pub struct MainCamera;
 
 #[derive(Component)]
 pub struct Player {
-    pub velocity: Vec3,
     pub max_velocity: f32,
     pub acceleration: f32,
 }
@@ -23,7 +22,11 @@ pub fn spawn_player(commands: &mut Commands) {
                 custom_size: Some(Vec2::new(15.0, 5.0)),
                 ..Default::default()
             },
-            transform: Transform::from_translation(Vec3::new(PLAYER_SIZE / 2. + GUN_OFFSET, 0., 200.)),
+            transform: Transform::from_translation(Vec3::new(
+                PLAYER_SIZE / 2. + GUN_OFFSET,
+                0.,
+                200.,
+            )),
             ..Default::default()
         })
         .insert(gun::Gun {
@@ -43,19 +46,21 @@ pub fn spawn_player(commands: &mut Commands) {
         })
         .insert(RigidBody::Dynamic)
         .insert(Collider::cuboid(PLAYER_SIZE / 2.0, PLAYER_SIZE / 2.0))
+        .insert(Dominance::group(10))
         .insert(TransformBundle::from(Transform::from_xyz(0.0, 0.0, 100.0)))
-        .insert(Damping { linear_damping: FRICTION, angular_damping: FRICTION })
+        .insert(Damping {
+            linear_damping: FRICTION,
+            angular_damping: FRICTION,
+        })
         .insert(Velocity {
-            linvel: Vec2::new(0.0, 0.0),
-            angvel: 0.0
+            linvel: Vec2::ZERO,
+            angvel: 0.0,
         })
         .insert(Player {
-            velocity: Vec3::ZERO,
             max_velocity: PLAYER_MAX_SPEED,
             acceleration: PLAYER_ACCEL,
         })
         .add_child(gun_entity);
-
 }
 
 pub fn player_movement_sys(
