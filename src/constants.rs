@@ -1,5 +1,9 @@
-pub const BULLET_SPEED: f32 = 1500.0;
+use bevy::prelude::*;
+
+pub const BULLET_SPEED: f32 = 2000.0;
 pub const BULLET_LIFETIME: f32 = 3.0;
+pub const BULLET_SIZE: Vec2 = Vec2 { x: 15., y: 2. };
+pub const GUN_OFFSET: f32 = 8.;
 pub const PLAYER_SIZE: f32 = 30.0;
 pub const PLAYER_MAX_SPEED: f32 = 400.0;
 pub const GRID_SIZE: f32 = 2000.0; // Grid boundary

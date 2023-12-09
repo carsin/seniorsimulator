@@ -19,7 +19,7 @@ fn main() {
                 bevy::window::close_on_esc,
                 player::player_movement_sys,
                 player::camera_follow_player_system,
-                bullet_movement_system,
+                // bullet_movement_system,
                 gun::gun_controls,
                 npc::npc_movement_system,
             ),
@@ -52,6 +52,8 @@ fn setup(mut commands: Commands, mut rapier_config: ResMut<RapierConfiguration>)
             transform: Transform::from_xyz(100., 100., 100.), // initial position
             ..Default::default()
         })
+        .insert(RigidBody::Fixed)
+        .insert(Collider::cuboid(15., 15.))
         .insert(npc::Npc {
             velocity: Vec3::new(0.0, 0.0, 0.0),
             speed: NPC_SPEED,

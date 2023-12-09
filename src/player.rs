@@ -23,11 +23,11 @@ pub fn spawn_player(commands: &mut Commands) {
                 custom_size: Some(Vec2::new(15.0, 5.0)),
                 ..Default::default()
             },
-            transform: Transform::from_translation(Vec3::new(2., 0., 200.)),
+            transform: Transform::from_translation(Vec3::new(PLAYER_SIZE / 2. + GUN_OFFSET, 0., 200.)),
             ..Default::default()
         })
         .insert(gun::Gun {
-            shoot_cooldown: 0.2,
+            shoot_cooldown: 0.05,
             shoot_timer: 0.0,
         })
         .id();
